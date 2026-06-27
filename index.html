@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="theme-color" content="#0038a8"/>
+<title>ReadySpeak — Filipino Phrasebook</title>
+<style>
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{ font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(160deg, #0038a8 0%, #001a6e 100%); min-height: 100vh; padding-bottom: 80px; }}
+  h1 {{ text-align:center; color:white; font-size:1.4rem; font-weight:900; padding: 18px 16px 4px; text-shadow: 1px 1px 6px rgba(0,0,0,0.3); }}
+  .subtitle {{ text-align:center; color:rgba(255,255,255,0.85); font-size:0.82rem; margin-bottom:16px; }}
+  .brand {{ text-align:center; color:rgba(255,255,255,0.6); font-size:0.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding-top:6px; }}
+  .save-hint {{ background:rgba(0,0,0,0.2); color:rgba(255,255,255,0.9); font-size:0.78rem; padding:10px 16px; text-align:center; line-height:1.5; }}
+  .save-hint b {{ color: white; }}
+  .dir-toggle {{ display:flex; gap:8px; padding:12px 16px 4px; max-width:460px; margin:0 auto; }}
+  .dir-btn {{ flex:1; padding:10px; border:2px solid rgba(255,255,255,0.4); border-radius:12px; background:transparent; color:white; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all 0.2s; }}
+  .dir-btn.active {{ background:white; color:#0038a8; border-color:white; }}
+  .search-bar {{ display:flex; align-items:center; background:rgba(255,255,255,0.95); border-radius:14px; margin:12px 16px; padding:10px 14px; gap:8px; max-width:460px; margin-left:auto; margin-right:auto; }}
+  .search-icon {{ font-size:1rem; }}
+  .search-bar input {{ border:none; outline:none; font-size:0.95rem; width:100%; background:transparent; color:#2c3e50; }}
+  .cat-row {{ display:flex; gap:8px; overflow-x:auto; padding:0 16px 12px; max-width:460px; margin:0 auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }}
+  .cat-row::-webkit-scrollbar {{ display:none; }}
+  .cat-pill {{ flex-shrink:0; padding:8px 14px; border-radius:20px; border:none; cursor:pointer; font-weight:700; font-size:0.82rem; white-space:nowrap; background:rgba(255,255,255,0.25); color:white; transition:all 0.2s; }}
+  .cat-pill.active {{ background:white; color:#0038a8; }}
+  .phrase-list {{ padding:0 16px; max-width:460px; margin:0 auto; }}
+  .phrase-card {{ background:white; border-radius:14px; padding:14px 16px; margin-bottom:10px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:transform 0.15s; position:relative; }}
+  .phrase-card:active {{ transform:scale(0.98); }}
+  .phrase-card.speaking {{ box-shadow:0 0 0 3px #0038a8, 0 3px 12px rgba(0,0,0,0.12); }}
+  .phrase-en {{ font-size:0.95rem; color:#2c3e50; font-weight:600; margin-bottom:6px; line-height:1.4; }}
+  .phrase-es {{ font-size:1.1rem; color:#0038a8; font-weight:700; line-height:1.4; display:flex; align-items:center; gap:8px; }}
+  .phrase-es .speak-icon {{ font-size:1.2rem; flex-shrink:0; }}
+  .phrase-tag {{ font-size:0.65rem; color:#999; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }}
+  .no-results {{ text-align:center; color:rgba(255,255,255,0.7); padding:40px 16px; font-size:0.95rem; }}
+  .now-speaking {{ position:fixed; bottom:0; left:0; right:0; background:#0038a8; color:white; padding:14px 20px; text-align:center; font-weight:700; font-size:0.9rem; transform:translateY(100%); transition:transform 0.3s; z-index:100; }}
+  .now-speaking.show {{ transform:translateY(0); }}
+  .wave {{ margin-right:8px; }}
+  .add-phrase-btn {{ display:block; width:calc(100% - 32px); margin:12px auto; padding:14px; background:linear-gradient(135deg, #0038a8, #ce1126); color:white; border:none; border-radius:14px; font-size:1rem; font-weight:700; cursor:pointer; letter-spacing:0.5px; max-width:460px; }}
+  .add-phrase-btn:active {{ opacity:0.85; }}
+  .modal-overlay {{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:999; align-items:flex-end; justify-content:center; }}
+  .modal-overlay.show {{ display:flex; }}
+  .modal-box {{ background:white; border-radius:24px 24px 0 0; padding:24px 20px 40px; width:100%; max-width:500px; animation:slideUp 0.25s ease; }}
+  @keyframes slideUp {{ from {{ transform:translateY(100%); }} to {{ transform:translateY(0); }} }}
+  .modal-title {{ font-size:1.15rem; font-weight:800; color:#2c3e50; margin-bottom:16px; text-align:center; }}
+  .modal-label {{ font-size:0.8rem; font-weight:700; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; margin-top:12px; }}
+  .modal-input, .modal-select {{ width:100%; padding:12px 14px; border:2px solid #e0e0e0; border-radius:12px; font-size:1rem; color:#2c3e50; box-sizing:border-box; outline:none; font-family:inherit; }}
+  .modal-input:focus, .modal-select:focus {{ border-color:#0038a8; }}
+  .modal-btn-row {{ display:flex; gap:10px; margin-top:18px; }}
+  .modal-cancel {{ flex:1; padding:13px; border:2px solid #ddd; background:white; border-radius:12px; font-size:0.95rem; font-weight:700; color:#666; cursor:pointer; }}
+  .modal-save {{ flex:2; padding:13px; background:linear-gradient(135deg, #0038a8, #ce1126); border:none; border-radius:12px; font-size:0.95rem; font-weight:700; color:white; cursor:pointer; }}
+  .modal-save:active, .modal-cancel:active {{ opacity:0.8; }}
+  .modal-error {{ color:#e74c3c; font-size:0.82rem; margin-top:8px; text-align:center; min-height:18px; }}
+  .delete-phrase {{ position:absolute; top:8px; right:8px; background:none; border:none; color:#ccc; font-size:1rem; cursor:pointer; padding:4px 6px; border-radius:8px; line-height:1; }}
+  .delete-phrase:active {{ color:#e74c3c; }}
+  .custom-badge {{ display:inline-block; background:#f0f4ff; color:#0038a8; font-size:0.6rem; font-weight:700; padding:1px 6px; border-radius:6px; margin-left:6px; letter-spacing:0.5px; vertical-align:middle; }}
+  .licensed {{ text-align:center; color:rgba(255,255,255,0.45); font-size:0.65rem; padding:4px 16px 0; }}
+</style>
+</head>
+<body>
+
+<div class="brand">ReadySpeak</div>
+<h1>🇵🇭 Filipino Phrasebook</h1>
+<p class="subtitle">Nursing Home &amp; Care • Works Offline</p>
+<p class="licensed">Licensed for single facility use</p>
+
+<div class="save-hint">
+  📱 <b>Save this app:</b> Tap your browser menu (⋮) → <b>"Add to Home Screen"</b>. Works with no internet.
+</div>
+
+<div class="dir-toggle">
+  <button class="dir-btn active" onclick="setDir('en-tl')">🇺🇸 English → Filipino</button>
+  <button class="dir-btn" onclick="setDir('tl-en')">🇵🇭 Filipino → English</button>
+</div>
+
+<div class="search-bar">
+  <span class="search-icon">🔍</span>
+  <input type="text" id="searchInput" placeholder="Search phrases..." oninput="renderPhrases()"/>
+</div>
+
+<div class="cat-row" id="catRow"></div>
+<div class="phrase-list" id="phraseList"></div>
+
+<button class="add-phrase-btn" onclick="openAddModal()">＋ Add My Own Phrase</button>
+
+<div class="modal-overlay" id="addModal" onclick="closeModalIfOutside(event)">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Add a New Phrase</div>
+    <div class="modal-label">Category</div>
+    <select class="modal-select" id="newCat">
+      <option value="My Phrases">My Phrases</option>
+      <option value="Meals &amp; Drinks">Meals &amp; Drinks</option>
+      <option value="Personal Care">Personal Care</option>
+      <option value="Medical">Medical</option>
+      <option value="Common Requests">Common Requests</option>
+      <option value="Feelings &amp; Social">Feelings &amp; Social</option>
+      <option value="Mobility">Mobility</option>
+      <option value="Sleep &amp; Rest">Sleep &amp; Rest</option>
+    </select>
+    <div class="modal-label">English phrase</div>
+    <input class="modal-input" id="newEn" type="text" placeholder="e.g. I need more blankets" maxlength="120"/>
+    <div class="modal-label">Filipino translation</div>
+    <input class="modal-input" id="newEs" type="text" placeholder="e.g. Kailangan ko ng higit pang kumot" maxlength="120"/>
+    <div class="modal-error" id="modalError"></div>
+    <div class="modal-btn-row">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-save" onclick="saveCustomPhrase()">Save Phrase ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="now-speaking" id="nowSpeaking">
+  <span class="wave">🔊</span> <span id="speakingText"></span>
+</div>
+
+<script>
+// ===== PHRASES =====
+const PHRASES = [
+  {
+    "cat": "Meals & Drinks",
+    "en": "I would like a coffee, please",
+    "tl": "Gusto ko ng kape, pakiusap"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "Can I have some water?",
+    "tl": "Maaari ba akong magkaroon ng tubig?"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "I'm hungry",
+    "tl": "Nagugutom ako"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "I'm thirsty",
+    "tl": "Nauuhaw ako"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "What's for lunch?",
+    "tl": "Anong ulam sa tanghalian?"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "What's for dinner?",
+    "tl": "Anong ulam sa hapunan?"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "This food is too hot",
+    "tl": "Masyadong mainit ang pagkain"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "This food is too cold",
+    "tl": "Masyadong malamig ang pagkain"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "I don't like this",
+    "tl": "Hindi ko ito gusto"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "Can I have more, please?",
+    "tl": "Maaari ba akong magkaroon ng higit pa?"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "I'm finished eating",
+    "tl": "Tapos na akong kumain"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "Can you cut this for me?",
+    "tl": "Maaari mo bang gupitin ito para sa akin?"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "I need a spoon",
+    "tl": "Kailangan ko ng kutsara"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "I need a fork",
+    "tl": "Kailangan ko ng tinidor"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "I need a napkin",
+    "tl": "Kailangan ko ng napkin"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "Can I have some juice?",
+    "tl": "Maaari ba akong magkaroon ng juice?"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "I want tea, not coffee",
+    "tl": "Gusto ko ng tsaa, hindi kape"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "Can I have some milk?",
+    "tl": "Maaari ba akong magkaroon ng gatas?"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "Can you warm this up?",
+    "tl": "Maaari mo bang initin ito?"
+  },
+  {
+    "cat": "Meals & Drinks",
+    "en": "I would like some soup",
+    "tl": "Gusto ko ng sopas"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I need to use the bathroom",
+    "tl": "Kailangan kong pumunta sa banyo"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I need help getting up",
+    "tl": "Kailangan ko ng tulong para bumangon"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I need help sitting down",
+    "tl": "Kailangan ko ng tulong para umupo"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "Can you help me to the bathroom?",
+    "tl": "Maaari mo ba akong tulungan sa banyo?"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I need a bath",
+    "tl": "Kailangan kong maligo"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I need to wash my hands",
+    "tl": "Kailangan kong hugasan ang aking mga kamay"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I need to brush my teeth",
+    "tl": "Kailangan kong magsipilyo"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "Can you help me get dressed?",
+    "tl": "Maaari mo ba akong tulungan na magbihis?"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I need clean clothes",
+    "tl": "Kailangan ko ng malinis na damit"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I'm cold, can I have a blanket?",
+    "tl": "Nilalamig ako, maaari ba akong magkaroon ng kumot?"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I'm too hot",
+    "tl": "Mainit ako"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "Can you open the window?",
+    "tl": "Maaari mo bang buksan ang bintana?"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I need a towel",
+    "tl": "Kailangan ko ng tuwalya"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "I need help changing position",
+    "tl": "Kailangan ko ng tulong para magpalit ng posisyon"
+  },
+  {
+    "cat": "Personal Care",
+    "en": "Can you fix my pillow?",
+    "tl": "Maaari mo bang ayusin ang aking unan?"
+  },
+  {
+    "cat": "Medical",
+    "en": "I'm in pain",
+    "tl": "Masakit ako"
+  },
+  {
+    "cat": "Medical",
+    "en": "My head hurts",
+    "tl": "Masakit ang aking ulo"
+  },
+  {
+    "cat": "Medical",
+    "en": "My stomach hurts",
+    "tl": "Masakit ang aking tiyan"
+  },
+  {
+    "cat": "Medical",
+    "en": "My back hurts",
+    "tl": "Masakit ang aking likod"
+  },
+  {
+    "cat": "Medical",
+    "en": "My chest hurts",
+    "tl": "Masakit ang aking dibdib"
+  },
+  {
+    "cat": "Medical",
+    "en": "I can't breathe well",
+    "tl": "Hindi ako makahinga nang maayos"
+  },
+  {
+    "cat": "Medical",
+    "en": "I feel dizzy",
+    "tl": "Nahihilo ako"
+  },
+  {
+    "cat": "Medical",
+    "en": "I feel nauseous",
+    "tl": "Naduduwal ako"
+  },
+  {
+    "cat": "Medical",
+    "en": "I need my medication",
+    "tl": "Kailangan ko ng aking gamot"
+  },
+  {
+    "cat": "Medical",
+    "en": "I need a doctor",
+    "tl": "Kailangan ko ng doktor"
+  },
+  {
+    "cat": "Medical",
+    "en": "I need a nurse",
+    "tl": "Kailangan ko ng nars"
+  },
+  {
+    "cat": "Medical",
+    "en": "I fell down",
+    "tl": "Nahulog ako"
+  },
+  {
+    "cat": "Medical",
+    "en": "I have a fever",
+    "tl": "Nilalagnat ako"
+  },
+  {
+    "cat": "Medical",
+    "en": "I feel very weak",
+    "tl": "Lubhang mahina ang pakiramdam ko"
+  },
+  {
+    "cat": "Medical",
+    "en": "I'm having trouble swallowing",
+    "tl": "Nahihirapan akong lumunok"
+  },
+  {
+    "cat": "Medical",
+    "en": "Call 911 please",
+    "tl": "Tumawag ng 911 pakiusap"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "Please help me",
+    "tl": "Pakitulungan ako"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "Can you turn on the TV?",
+    "tl": "Maaari mo bang i-on ang TV?"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "Can you turn off the TV?",
+    "tl": "Maaari mo bang i-off ang TV?"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "Can you turn off the light?",
+    "tl": "Maaari mo bang patayin ang ilaw?"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "Can you turn on the light?",
+    "tl": "Maaari mo bang i-on ang ilaw?"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "I want to see my family",
+    "tl": "Gusto kong makita ang aking pamilya"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "Please speak slowly",
+    "tl": "Pakiusap, magsalita nang dahan-dahan"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "I don't understand",
+    "tl": "Hindi ko naiintindihan"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "Yes",
+    "tl": "Oo"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "No",
+    "tl": "Hindi"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "Thank you",
+    "tl": "Salamat"
+  },
+  {
+    "cat": "Common Requests",
+    "en": "Please",
+    "tl": "Pakiusap"
+  },
+  {
+    "cat": "Feelings & Social",
+    "en": "I feel sad",
+    "tl": "Nalulungkot ako"
+  },
+  {
+    "cat": "Feelings & Social",
+    "en": "I feel anxious",
+    "tl": "Nababalisa ako"
+  },
+  {
+    "cat": "Feelings & Social",
+    "en": "I feel lonely",
+    "tl": "Nag-iisa ako"
+  },
+  {
+    "cat": "Feelings & Social",
+    "en": "I'm scared",
+    "tl": "Natatakot ako"
+  },
+  {
+    "cat": "Feelings & Social",
+    "en": "I feel better today",
+    "tl": "Mas maganda ang pakiramdam ko ngayon"
+  },
+  {
+    "cat": "Feelings & Social",
+    "en": "Good morning",
+    "tl": "Magandang umaga"
+  },
+  {
+    "cat": "Feelings & Social",
+    "en": "Good afternoon",
+    "tl": "Magandang hapon"
+  },
+  {
+    "cat": "Feelings & Social",
+    "en": "Good night",
+    "tl": "Magandang gabi"
+  },
+  {
+    "cat": "Feelings & Social",
+    "en": "How are you?",
+    "tl": "Kamusta ka?"
+  },
+  {
+    "cat": "Feelings & Social",
+    "en": "I'm okay",
+    "tl": "Mabuti naman ako"
+  },
+  {
+    "cat": "Mobility",
+    "en": "I need my wheelchair",
+    "tl": "Kailangan ko ng aking wheelchair"
+  },
+  {
+    "cat": "Mobility",
+    "en": "I need my walker",
+    "tl": "Kailangan ko ng aking walker"
+  },
+  {
+    "cat": "Mobility",
+    "en": "Can you help me walk?",
+    "tl": "Maaari mo ba akong tulungan na maglakad?"
+  },
+  {
+    "cat": "Mobility",
+    "en": "I'm afraid I'll fall",
+    "tl": "Natatakot akong mahulog"
+  },
+  {
+    "cat": "Sleep & Rest",
+    "en": "I'm tired, I want to sleep",
+    "tl": "Pagod na ako, gusto ko nang matulog"
+  },
+  {
+    "cat": "Sleep & Rest",
+    "en": "Can you help me into bed?",
+    "tl": "Maaari mo ba akong tulungan na humiga?"
+  },
+  {
+    "cat": "Sleep & Rest",
+    "en": "I can't sleep",
+    "tl": "Hindi ako makatulog"
+  },
+  {
+    "cat": "Sleep & Rest",
+    "en": "I need my pillow adjusted",
+    "tl": "Kailangan kong ayusin ang aking unan"
+  }
+];
+
+// ===== STATE =====
+let direction = 'en-tl';
+let activeCat = 'All';
+let searchQuery = '';
+const TL_LANG = 'fil-PH';
+
+function loadCustomPhrases() {{
+  try {{ return JSON.parse(localStorage.getItem('customPhrases_filipino') || '[]'); }}
+  catch {{ return []; }}
+}}
+function saveCustomPhrasesToStorage(arr) {{
+  localStorage.setItem('customPhrases_filipino', JSON.stringify(arr));
+}}
+let CUSTOM_PHRASES = loadCustomPhrases();
+
+function getAllPhrases() {{ return [...PHRASES, ...CUSTOM_PHRASES]; }}
+function getCategories() {{
+  const all = getAllPhrases();
+  const cats = ['All', ...Array.from(new Set(all.map(p => p.cat)))];
+  if (CUSTOM_PHRASES.length > 0 && !cats.includes('My Phrases')) cats.push('My Phrases');
+  return cats;
+}}
+
+function init() {{
+  renderCategories();
+  renderPhrases();
+  if (window.speechSynthesis) {{
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  }}
+  document.addEventListener('touchstart', function unlock() {{
+    if (window.speechSynthesis) {{
+      const u = new SpeechSynthesisUtterance('');
+      window.speechSynthesis.speak(u);
+    }}
+    document.removeEventListener('touchstart', unlock);
+  }}, {{ once: true }});
+}}
+
+function renderCategories() {{
+  const row = document.getElementById('catRow');
+  row.innerHTML = getCategories().map(cat =>
+    `<button class="cat-pill ${{cat === activeCat ? 'active' : ''}}" onclick="setCat('${{cat.replace(/'/g, "\'")}}')">${{cat}}</button>`
+  ).join('');
+}}
+
+function setCat(cat) {{
+  activeCat = cat;
+  renderCategories();
+  renderPhrases();
+}}
+
+function setDir(dir) {{
+  direction = dir;
+  document.querySelectorAll('.dir-btn').forEach((b, i) =>
+    b.classList.toggle('active', (i === 0 && dir === 'en-tl') || (i === 1 && dir === 'tl-en'))
+  );
+  renderPhrases();
+}}
+
+function renderPhrases() {{
+  searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+  const list = document.getElementById('phraseList');
+  const all = getAllPhrases();
+  let filtered = all;
+  if (activeCat !== 'All') filtered = filtered.filter(p => p.cat === activeCat);
+  if (searchQuery) filtered = filtered.filter(p =>
+    p.en.toLowerCase().includes(searchQuery) || p.tl.toLowerCase().includes(searchQuery)
+  );
+  if (filtered.length === 0) {{
+    list.innerHTML = '<div class="no-results">No phrases found. Try a different search.</div>';
+    return;
+  }}
+  const isEnTl = direction === 'en-tl';
+  list.innerHTML = filtered.map((p) => {{
+    const isCustom = !!p.custom;
+    const primary = isEnTl ? p.en : p.tl;
+    const secondary = isEnTl ? p.tl : p.en;
+    const primaryFlag = isEnTl ? '🇺🇸' : '🇵🇭';
+    const secondaryFlag = isEnTl ? '🇵🇭' : '🇺🇸';
+    const deleteBtn = isCustom
+      ? `<button class="delete-phrase" onclick="event.stopPropagation();deleteCustomPhrase('${{p.id}}')" title="Delete">✕</button>`
+      : '';
+    const customBadge = isCustom ? '<span class="custom-badge">MY PHRASE</span>' : '';
+    return `
+      <div class="phrase-card" onclick="speakPhraseText('${{secondary.replace(/'/g, "\'")}}", '${{isEnTl ? TL_LANG : 'en-US'}}')">
+        ${{deleteBtn}}
+        <div class="phrase-tag">${{p.cat}}${{customBadge}}</div>
+        <div class="phrase-en">${{primaryFlag}} ${{primary}}</div>
+        <div class="phrase-es"><span class="speak-icon">🔊</span>${{secondaryFlag}} ${{secondary}}</div>
+      </div>`;
+  }}).join('');
+}}
+
+function speakPhraseText(text, lang) {{
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = lang;
+  utter.rate = 0.85;
+  const voices = window.speechSynthesis.getVoices();
+  const match = voices.find(v => v.lang === lang) || voices.find(v => v.lang.startsWith(lang.substring(0,2)));
+  if (match) utter.voice = match;
+  utter.onstart = () => {{
+    document.getElementById('speakingText').textContent = text;
+    document.getElementById('nowSpeaking').classList.add('show');
+  }};
+  utter.onend = () => document.getElementById('nowSpeaking').classList.remove('show');
+  window.speechSynthesis.speak(utter);
+}}
+
+function openAddModal() {{
+  document.getElementById('newEn').value = '';
+  document.getElementById('newEs').value = '';
+  document.getElementById('modalError').textContent = '';
+  document.getElementById('addModal').classList.add('show');
+}}
+function closeModal() {{ document.getElementById('addModal').classList.remove('show'); }}
+function closeModalIfOutside(e) {{ if (e.target === document.getElementById('addModal')) closeModal(); }}
+function saveCustomPhrase() {{
+  const en = document.getElementById('newEn').value.trim();
+  const tl = document.getElementById('newEs').value.trim();
+  const cat = document.getElementById('newCat').value;
+  const errEl = document.getElementById('modalError');
+  if (!en) {{ errEl.textContent = 'Please enter the English phrase.'; return; }}
+  if (!tl) {{ errEl.textContent = 'Please enter the Filipino translation.'; return; }}
+  const newPhrase = {{ cat, en, tl, custom: true, id: 'c_' + Date.now() }};
+  CUSTOM_PHRASES.push(newPhrase);
+  saveCustomPhrasesToStorage(CUSTOM_PHRASES);
+  closeModal();
+  activeCat = cat;
+  renderCategories();
+  renderPhrases();
+}}
+function deleteCustomPhrase(id) {{
+  if (!confirm('Delete this phrase?')) return;
+  CUSTOM_PHRASES = CUSTOM_PHRASES.filter(p => p.id !== id);
+  saveCustomPhrasesToStorage(CUSTOM_PHRASES);
+  renderCategories();
+  renderPhrases();
+}}
+
+init();
+</script>
+</body>
+</html>
